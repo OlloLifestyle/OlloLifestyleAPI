@@ -3,7 +3,7 @@ using OlloLifestyleAPI.Application.Interfaces.Persistence;
 using OlloLifestyleAPI.Core.Entities.Tenant;
 using OlloLifestyleAPI.Infrastructure.Persistence.Factories;
 
-namespace OlloLifestyleAPI.Infrastructure.Repositories;
+namespace OlloLifestyleAPI.Infrastructure.Repositories.Tenant;
 
 public class CompanyRepository : ICompanyRepository
 {

@@ -3,23 +3,23 @@ using OlloLifestyleAPI.Application.Interfaces.Persistence;
 using OlloLifestyleAPI.Core.Entities.Master;
 using OlloLifestyleAPI.Infrastructure.Persistence;
 
-namespace OlloLifestyleAPI.Infrastructure.Repositories;
+namespace OlloLifestyleAPI.Infrastructure.Repositories.Master;
 
-public class UnitOfWork : IUnitOfWork
+public class MasterUnitOfWork : IMasterUnitOfWork
 {
     private readonly AppDbContext _context;
     private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(AppDbContext context)
+    public MasterUnitOfWork(AppDbContext context)
     {
         _context = context;
-        Users = new GenericRepository<User>(_context);
-        Companies = new GenericRepository<Company>(_context);
-        Roles = new GenericRepository<Role>(_context);
-        Permissions = new GenericRepository<Permission>(_context);
-        UserRoles = new GenericRepository<UserRole>(_context);
-        RolePermissions = new GenericRepository<RolePermission>(_context);
-        UserCompanies = new GenericRepository<UserCompany>(_context);
+        Users = new MasterGenericRepository<User>(_context);
+        Companies = new MasterGenericRepository<Company>(_context);
+        Roles = new MasterGenericRepository<Role>(_context);
+        Permissions = new MasterGenericRepository<Permission>(_context);
+        UserRoles = new MasterGenericRepository<UserRole>(_context);
+        RolePermissions = new MasterGenericRepository<RolePermission>(_context);
+        UserCompanies = new MasterGenericRepository<UserCompany>(_context);
     }
 
     public IGenericRepository<User> Users { get; }

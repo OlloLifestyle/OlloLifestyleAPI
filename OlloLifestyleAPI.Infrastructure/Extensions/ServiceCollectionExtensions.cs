@@ -6,8 +6,10 @@ using OlloLifestyleAPI.Application.Interfaces.Persistence;
 using OlloLifestyleAPI.Application.Interfaces.Services;
 using OlloLifestyleAPI.Infrastructure.Persistence;
 using OlloLifestyleAPI.Infrastructure.Persistence.Factories;
-using OlloLifestyleAPI.Infrastructure.Repositories;
+using OlloLifestyleAPI.Infrastructure.Repositories.Master;
+using OlloLifestyleAPI.Infrastructure.Repositories.Tenant;
 using OlloLifestyleAPI.Infrastructure.Services.Tenant;
+using OlloLifestyleAPI.Infrastructure.Interceptors;
 
 namespace OlloLifestyleAPI.Infrastructure.Extensions;
 
@@ -17,20 +19,28 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services, 
         IConfiguration configuration)
     {
+        // Add interceptors
+        services.AddScoped<AuditInterceptor>();
+
         // Add AppDbContext (Shared Identity Database)
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
+            .AddInterceptors(services.BuildServiceProvider().GetRequiredService<AuditInterceptor>()));
 
         // Add Multi-tenancy services
         services.AddMemoryCache();
         services.AddScoped<ITenantService, TenantService>();
         services.AddScoped<CompanyDbFactory>();
 
-        // Add Repository services
+        // Add Repository services - Master context
+        services.AddScoped<IMasterUnitOfWork, MasterUnitOfWork>();
+        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<IMasterUnitOfWork>());
+
+        // Add Repository services - Tenant context
+        services.AddScoped<ITenantUnitOfWork, TenantUnitOfWork>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Add Authentication services
         services.AddScoped<IAuthService, Infrastructure.Services.Master.AuthService>();

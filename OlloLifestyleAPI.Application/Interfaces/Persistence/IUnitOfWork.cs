@@ -17,3 +17,8 @@ public interface IUnitOfWork : IDisposable
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
 }
+
+public interface IMasterUnitOfWork : IUnitOfWork
+{
+    // Master-specific functionality can be added here if needed
+}

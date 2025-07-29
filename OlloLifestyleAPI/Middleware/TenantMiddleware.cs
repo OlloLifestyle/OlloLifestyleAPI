@@ -52,9 +52,15 @@ public class TenantMiddleware
         if (!user.Identity?.IsAuthenticated == true)
             return null;
 
-        var companyIdClaim = user.FindFirst("CompanyId")?.Value;
+        // Try to get company_id from the new JWT claims structure
+        var companyIdClaim = user.FindFirst("company_id")?.Value;
         if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out var companyId))
-            return null;
+        {
+            // Fallback to old claim structure for backward compatibility
+            companyIdClaim = user.FindFirst("CompanyId")?.Value;
+            if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out companyId))
+                return null;
+        }
 
         var tenantInfo = await tenantService.GetTenantAsync(companyId);
         if (tenantInfo == null)

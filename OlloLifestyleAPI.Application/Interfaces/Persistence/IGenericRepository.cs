@@ -5,6 +5,7 @@ namespace OlloLifestyleAPI.Application.Interfaces.Persistence;
 public interface IGenericRepository<T> where T : class
 {
     Task<T?> GetByIdAsync(int id);
+    Task<T?> GetByIdAsync(Guid id);
     Task<IEnumerable<T>> GetAllAsync();
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
     Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
@@ -16,4 +17,12 @@ public interface IGenericRepository<T> where T : class
     void UpdateRange(IEnumerable<T> entities);
     void Remove(T entity);
     void RemoveRange(IEnumerable<T> entities);
+    IQueryable<T> GetQueryable();
+    Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize);
+    Task<IEnumerable<T>> GetPagedAsync(
+        Expression<Func<T, bool>>? predicate,
+        int pageNumber, 
+        int pageSize,
+        Expression<Func<T, object>>? orderBy = null,
+        bool ascending = true);
 }
