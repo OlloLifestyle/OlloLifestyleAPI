@@ -23,11 +23,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<AuditInterceptor>();
 
         // Add AppDbContext (Shared Identity Database)
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
-            .AddInterceptors(services.BuildServiceProvider().GetRequiredService<AuditInterceptor>()));
+            .AddInterceptors(serviceProvider.GetRequiredService<AuditInterceptor>()));
 
         // Add Multi-tenancy services
         services.AddMemoryCache();
@@ -39,7 +39,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<IMasterUnitOfWork>());
 
         // Add Repository services - Tenant context
-        services.AddScoped<ITenantUnitOfWork, TenantUnitOfWork>();
+        services.AddScoped<ITenantUnitOfWork>(provider =>
+        {
+            var factory = provider.GetRequiredService<CompanyDbFactory>();
+            var context = factory.CreateDbContext();
+            return new TenantUnitOfWork(context);
+        });
         services.AddScoped<ICompanyRepository, CompanyRepository>();
 
         // Add Authentication services

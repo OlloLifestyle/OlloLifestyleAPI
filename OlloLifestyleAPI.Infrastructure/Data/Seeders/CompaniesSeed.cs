@@ -16,8 +16,8 @@ public static class CompaniesSeed
             new Company
             {
                 Name = "Acme Corporation",
-                DatabaseName = "OlloLifestyle_Acme",
-                ConnectionString = "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyle_Acme;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;",
+                DatabaseName = "OlloLifestyleAPI_Tenant_Acme",
+                ConnectionString = "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 ContactEmail = "admin@acme.com",
@@ -26,8 +26,8 @@ public static class CompaniesSeed
             new Company
             {
                 Name = "Global Tech Ltd",
-                DatabaseName = "OlloLifestyle_GlobalTech",
-                ConnectionString = "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyle_GlobalTech;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;",
+                DatabaseName = "OlloLifestyleAPI_Tenant_GlobalTech",
+                ConnectionString = "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 ContactEmail = "admin@globaltech.com",

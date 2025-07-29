@@ -3,9 +3,9 @@ using OlloLifestyleAPI.Application.DTOs.Tenant;
 
 namespace OlloLifestyleAPI.Application.Validators.Tenant;
 
-public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRequest>
+public class CreateEmployeeDtoValidator : AbstractValidator<CreateEmployeeDto>
 {
-    public CreateEmployeeRequestValidator()
+    public CreateEmployeeDtoValidator()
     {
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required")
@@ -50,22 +50,17 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
     }
 }
 
-public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRequest>
+public class UpdateEmployeeDtoValidator : AbstractValidator<UpdateEmployeeDto>
 {
-    public UpdateEmployeeRequestValidator()
+    public UpdateEmployeeDtoValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Invalid email format")
-            .MaximumLength(100).WithMessage("Email cannot exceed 100 characters");
-
         RuleFor(x => x.FirstName)
-            .NotEmpty().WithMessage("First name is required")
-            .MaximumLength(50).WithMessage("First name cannot exceed 50 characters");
+            .MaximumLength(50).WithMessage("First name cannot exceed 50 characters")
+            .When(x => !string.IsNullOrEmpty(x.FirstName));
 
         RuleFor(x => x.LastName)
-            .NotEmpty().WithMessage("Last name is required")
-            .MaximumLength(50).WithMessage("Last name cannot exceed 50 characters");
+            .MaximumLength(50).WithMessage("Last name cannot exceed 50 characters")
+            .When(x => !string.IsNullOrEmpty(x.LastName));
 
         RuleFor(x => x.Department)
             .MaximumLength(100).WithMessage("Department cannot exceed 100 characters")

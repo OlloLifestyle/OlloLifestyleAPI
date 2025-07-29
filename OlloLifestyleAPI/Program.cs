@@ -98,11 +98,9 @@ if (app.Environment.IsDevelopment())
     var appDbContext = scope.ServiceProvider.GetRequiredService<OlloLifestyleAPI.Infrastructure.Persistence.AppDbContext>();
     await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedMasterDataAsync(appDbContext);
     
-    // Seed tenant data for both companies
+    // Seed tenant data
     await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedTenantDataAsync(
-        "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyle_Acme;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
-    await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedTenantDataAsync(
-        "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyle_GlobalTech;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
+        "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
 }
 
 // Configure the HTTP request pipeline.

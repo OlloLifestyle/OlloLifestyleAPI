@@ -8,7 +8,11 @@
       "Bash(dotnet add:*)",
       "Bash(dotnet remove OlloLifestyleAPI.Application/OlloLifestyleAPI.Application.csproj package AutoMapper)",
       "Bash(taskkill:*)",
-      "Bash(dotnet clean:*)"
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(dotnet build:*)",
+      "Bash(timeout 20 dotnet run --project OlloLifestyleAPI)",
+      "Bash(sqlcmd:*)"
     ],
     "deny": []
   }
