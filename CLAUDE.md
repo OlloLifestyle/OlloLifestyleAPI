@@ -49,7 +49,7 @@ dotnet run --project OlloLifestyleAPI/OlloLifestyleAPI.csproj --environment Deve
 
 ### Multi-Tenancy
 - **Identity Database**: Contains users, roles, permissions, and company information
-- **Company Databases**: Tenant-specific business data (products, orders, etc.)
+- **Company Databases**: Tenant-specific business data
 - **Dynamic Context Switching**: Middleware resolves tenant based on authenticated user
 - **Tenant Provider**: Manages current tenant context throughout request lifecycle
 

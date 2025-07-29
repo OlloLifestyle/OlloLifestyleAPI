@@ -42,7 +42,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//await SeedDataAsync(app);
+await SeedDataAsync(app);
 
 app.Run();
 

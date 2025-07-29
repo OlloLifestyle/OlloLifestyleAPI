@@ -5,7 +5,11 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet restore:*)",
       "Bash(dotnet --version)",
-      "Bash(dotnet ef migrations add:*)"
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(taskkill:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(powershell:*)"
     ],
     "deny": []
   }

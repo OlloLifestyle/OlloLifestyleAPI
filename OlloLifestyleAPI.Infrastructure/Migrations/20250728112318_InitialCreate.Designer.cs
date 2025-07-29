@@ -12,7 +12,7 @@ using OlloLifestyleAPI.Infrastructure.DbContexts;
 namespace OlloLifestyleAPI.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250728101400_InitialCreate")]
+    [Migration("20250728112318_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
