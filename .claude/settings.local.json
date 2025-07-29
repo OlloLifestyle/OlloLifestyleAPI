@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet remove OlloLifestyleAPI.Application/OlloLifestyleAPI.Application.csproj package AutoMapper)",
+      "Bash(taskkill:*)",
+      "Bash(dotnet clean:*)"
+    ],
+    "deny": []
+  }
+}
