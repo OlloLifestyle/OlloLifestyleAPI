@@ -1,13 +1,10 @@
-using OlloLifestyleAPI.Core.Entities.Tenant;
+using OlloLifestyleAPI.Core.Entities.FactoryFlowTracker;
 
 namespace OlloLifestyleAPI.Application.Interfaces.Persistence;
 
 public interface ITenantUnitOfWork : IDisposable
 {
-    IGenericRepository<Employee> Employees { get; }
-    IGenericRepository<Product> Products { get; }
-    IGenericRepository<Order> Orders { get; }
-    IGenericRepository<OrderItem> OrderItems { get; }
+    IGenericRepository<User> Users { get; }
 
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

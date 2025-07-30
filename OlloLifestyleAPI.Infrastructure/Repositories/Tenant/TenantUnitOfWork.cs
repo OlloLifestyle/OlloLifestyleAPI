@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using OlloLifestyleAPI.Application.Interfaces.Persistence;
-using OlloLifestyleAPI.Core.Entities.Tenant;
+using OlloLifestyleAPI.Core.Entities.FactoryFlowTracker;
 using OlloLifestyleAPI.Infrastructure.Persistence;
 
 namespace OlloLifestyleAPI.Infrastructure.Repositories.Tenant;
@@ -13,16 +13,10 @@ public class TenantUnitOfWork : ITenantUnitOfWork
     public TenantUnitOfWork(CompanyDbContext context)
     {
         _context = context;
-        Employees = new TenantGenericRepository<Employee>(_context);
-        Products = new TenantGenericRepository<Product>(_context);
-        Orders = new TenantGenericRepository<Order>(_context);
-        OrderItems = new TenantGenericRepository<OrderItem>(_context);
+        Users = new TenantGenericRepository<User>(_context);
     }
 
-    public IGenericRepository<Employee> Employees { get; }
-    public IGenericRepository<Product> Products { get; }
-    public IGenericRepository<Order> Orders { get; }
-    public IGenericRepository<OrderItem> OrderItems { get; }
+    public IGenericRepository<User> Users { get; }
 
     public async Task<int> SaveChangesAsync()
     {

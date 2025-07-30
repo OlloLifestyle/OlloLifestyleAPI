@@ -1,20 +1,15 @@
-using OlloLifestyleAPI.Core.Entities.Tenant;
+using OlloLifestyleAPI.Core.Entities.FactoryFlowTracker;
 
 namespace OlloLifestyleAPI.Application.Interfaces.Persistence;
 
 public interface ICompanyRepository
 {
-    // Employee operations
-    Task<IEnumerable<Employee>> GetAllEmployeesAsync();
-    Task<Employee?> GetEmployeeByIdAsync(Guid id);
-    Task<Employee> CreateEmployeeAsync(Employee employee);
-    Task<Employee> UpdateEmployeeAsync(Employee employee);
-    Task<bool> DeleteEmployeeAsync(Guid id);
-    Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(string department);
-    Task<bool> EmployeeEmailExistsAsync(string email);
-    Task<bool> EmployeeNumberExistsAsync(string employeeNumber);
-
-    // Order operations (can be extended later)
-    Task<IEnumerable<Order>> GetAllOrdersAsync();
-    Task<Order?> GetOrderByIdAsync(Guid id);
+    // FactoryFlowTracker User operations
+    Task<IEnumerable<User>> GetAllUsersAsync();
+    Task<User?> GetUserByIdAsync(Guid id);
+    Task<User> CreateUserAsync(User user);
+    Task<User> UpdateUserAsync(User user);
+    Task<bool> DeleteUserAsync(Guid id);
+    Task<IEnumerable<User>> GetUsersByDepartmentAsync(string department);
+    Task<bool> UserEmailExistsAsync(string email);
 }

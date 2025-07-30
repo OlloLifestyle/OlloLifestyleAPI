@@ -49,7 +49,7 @@ public class TenantMiddleware
         ITenantService tenantService)
     {
         var user = context.User;
-        if (!user.Identity?.IsAuthenticated == true)
+        if (user.Identity?.IsAuthenticated != true)
             return null;
 
         // Try to get company_id from the new JWT claims structure

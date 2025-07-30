@@ -153,7 +153,7 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public async Task<string> GenerateJwtTokenAsync(
+    public Task<string> GenerateJwtTokenAsync(
         Core.Entities.Master.User user, 
         IList<Core.Entities.Master.Role> roles, 
         IList<Core.Entities.Master.Permission> permissions,
@@ -214,7 +214,7 @@ public class AuthService : IAuthService
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
     }
 
     private static bool VerifyPassword(string password, string hash)
@@ -222,6 +222,101 @@ public class AuthService : IAuthService
         // Simple hash verification for demo purposes
         // In production, use BCrypt.Net or similar
         return BCrypt.Net.BCrypt.Verify(password, hash);
+    }
+
+    public async Task<bool> LogoutAsync(int userId)
+    {
+        try
+        {
+            var user = await _appDbContext.Users.FindAsync(userId);
+            if (user != null)
+            {
+                // In a production system, you might want to:
+                // 1. Invalidate the token by adding to a blacklist
+                // 2. Update last logout time
+                // 3. Clear any session data
+                _logger.LogInformation("User {UserId} logged out", userId);
+                return true;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during logout for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<LoginResponse> RefreshTokenAsync(int userId)
+    {
+        try
+        {
+            // Find user with full context for token generation
+            var user = await _appDbContext.Users
+                .Include(u => u.UserCompanies)
+                    .ThenInclude(uc => uc.Company)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
+
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("User not found or inactive");
+            }
+
+            // Get active companies
+            var activeCompanies = user.UserCompanies
+                .Where(uc => uc.Company.IsActive)
+                .Select(uc => uc.Company)
+                .ToList();
+
+            if (!activeCompanies.Any())
+            {
+                throw new UnauthorizedAccessException("No active company access found");
+            }
+
+            // Get user roles and permissions
+            var userRoles = user.UserRoles.Select(ur => ur.Role).ToList();
+            var userPermissions = userRoles
+                .SelectMany(r => r.RolePermissions)
+                .Select(rp => rp.Permission)
+                .Where(p => p.IsActive)
+                .Distinct()
+                .ToList();
+
+            // Generate new token
+            var token = await GenerateJwtTokenAsync(user, userRoles, userPermissions, activeCompanies);
+
+            var expireMinutes = _configuration.GetValue<int>("Jwt:ExpireMinutes", 1440);
+            var expiresAt = DateTime.UtcNow.AddMinutes(expireMinutes);
+
+            return new LoginResponse
+            {
+                Token = token,
+                ExpiresAt = expiresAt,
+                User = new UserInfo
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    IsActive = user.IsActive
+                },
+                Companies = activeCompanies.Select(c => new CompanyInfo
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IsActive = c.IsActive
+                }).ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refreshing token for user {UserId}", userId);
+            throw;
+        }
     }
 
     public static string HashPassword(string password)

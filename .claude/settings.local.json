@@ -12,7 +12,16 @@
       "Bash(dotnet ef migrations:*)",
       "Bash(dotnet build:*)",
       "Bash(timeout 20 dotnet run --project OlloLifestyleAPI)",
-      "Bash(sqlcmd:*)"
+      "Bash(sqlcmd:*)",
+      "Bash(mv:*)",
+      "Bash(timeout 15 dotnet run --project OlloLifestyleAPI)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet ef dbcontext list:*)",
+      "Bash(dotnet ef database update:*)"
     ],
     "deny": []
   }

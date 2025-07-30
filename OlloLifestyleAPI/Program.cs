@@ -10,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add Memory Cache
+builder.Services.AddMemoryCache();
+
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -59,6 +62,9 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Add Application services
 builder.Services.AddApplicationServices();
 
+// Add Authentication services
+builder.Services.AddAuthenticationServices();
+
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -76,7 +82,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+// Add Authorization with Policies
+builder.Services.AddAuthorization(options =>
+{
+    // Permission-based authorization policies
+    options.AddPolicy("Permission.factoryflowtracker.user.read", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.read")));
+    
+    options.AddPolicy("Permission.factoryflowtracker.user.create", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.create")));
+    
+    options.AddPolicy("Permission.factoryflowtracker.user.update", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.update")));
+    
+    options.AddPolicy("Permission.factoryflowtracker.user.delete", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.delete")));
+    
+    options.AddPolicy("Permission.factoryflowtracker.user.suspend", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.suspend")));
+
+    // Role-based authorization policies
+    options.AddPolicy("Role.Administrator", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.RoleRequirement("Administrator")));
+    
+    options.AddPolicy("Role.SystemAdmin", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.RoleRequirement("SystemAdmin")));
+
+    // Company access policy
+    options.AddPolicy("CompanyAccess", policy =>
+        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.CompanyAccessRequirement(0))); // 0 means any company
+});
+
+// Register Authorization Handlers
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.PermissionAuthorizationHandler>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.RoleAuthorizationHandler>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.CompanyAccessAuthorizationHandler>();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -110,7 +150,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
-        c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+        c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
     });
 }
 
@@ -118,6 +158,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
 
 app.UseCors("AllowAll");
 

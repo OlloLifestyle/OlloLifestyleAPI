@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using OlloLifestyleAPI.Infrastructure.Data.Seeders;
-using OlloLifestyleAPI.Infrastructure.Data.Seeders.Tenant;
 using OlloLifestyleAPI.Infrastructure.Persistence;
 
 namespace OlloLifestyleAPI.Infrastructure.Data;
@@ -32,9 +31,6 @@ public static class SeedData
         // Ensure database is created
         await context.Database.EnsureCreatedAsync();
 
-        // Seed tenant data in order due to dependencies
-        await ProductsSeed.SeedAsync(context);
-        await EmployeesSeed.SeedAsync(context);
-        await OrdersSeed.SeedAsync(context);
+        // TODO: Add User seed data when needed
     }
 }

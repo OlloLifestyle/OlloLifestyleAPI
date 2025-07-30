@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OlloLifestyleAPI.Application.Interfaces.Persistence;
-using OlloLifestyleAPI.Core.Entities.Tenant;
+using OlloLifestyleAPI.Core.Entities.FactoryFlowTracker;
 using OlloLifestyleAPI.Infrastructure.Persistence.Factories;
 
 namespace OlloLifestyleAPI.Infrastructure.Repositories.Tenant;
@@ -14,112 +14,81 @@ public class CompanyRepository : ICompanyRepository
         _companyDbFactory = companyDbFactory;
     }
 
-    public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        return await context.Employees
-            .Where(e => e.IsActive)
-            .OrderBy(e => e.LastName)
-            .ThenBy(e => e.FirstName)
+        return await context.Users
+            .Where(u => u.Status == UserStatus.Active)
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
             .ToListAsync();
     }
 
-    public async Task<Employee?> GetEmployeeByIdAsync(Guid id)
+    public async Task<User?> GetUserByIdAsync(Guid id)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        return await context.Employees
-            .FirstOrDefaultAsync(e => e.Id == id && e.IsActive);
+        return await context.Users
+            .FirstOrDefaultAsync(u => u.Id == id && u.Status == UserStatus.Active);
     }
 
-    public async Task<Employee> CreateEmployeeAsync(Employee employee)
+    public async Task<User> CreateUserAsync(User user)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        context.Employees.Add(employee);
+        context.Users.Add(user);
         await context.SaveChangesAsync();
         
-        return employee;
+        return user;
     }
 
-    public async Task<Employee> UpdateEmployeeAsync(Employee employee)
+    public async Task<User> UpdateUserAsync(User user)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        context.Employees.Update(employee);
+        context.Users.Update(user);
         await context.SaveChangesAsync();
         
-        return employee;
+        return user;
     }
 
-    public async Task<bool> DeleteEmployeeAsync(Guid id)
+    public async Task<bool> DeleteUserAsync(Guid id)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        var employee = await context.Employees
-            .FirstOrDefaultAsync(e => e.Id == id);
+        var user = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (employee == null)
+        if (user == null)
         {
             return false;
         }
 
         // Soft delete
-        employee.IsActive = false;
-        employee.UpdatedAt = DateTime.UtcNow;
+        user.Status = UserStatus.Inactive;
+        user.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
         return true;
     }
 
-    public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(string department)
+    public async Task<IEnumerable<User>> GetUsersByDepartmentAsync(string department)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        return await context.Employees
-            .Where(e => e.Department == department && e.IsActive)
-            .OrderBy(e => e.LastName)
-            .ThenBy(e => e.FirstName)
+        return await context.Users
+            .Where(u => u.Department == department && u.Status == UserStatus.Active)
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
             .ToListAsync();
     }
 
-    public async Task<bool> EmployeeEmailExistsAsync(string email)
+    public async Task<bool> UserEmailExistsAsync(string email)
     {
         using var context = await _companyDbFactory.CreateDbContextAsync();
         
-        return await context.Employees
-            .AnyAsync(e => e.Email == email);
-    }
-
-    public async Task<bool> EmployeeNumberExistsAsync(string employeeNumber)
-    {
-        using var context = await _companyDbFactory.CreateDbContextAsync();
-        
-        return await context.Employees
-            .AnyAsync(e => e.EmployeeNumber == employeeNumber);
-    }
-
-    public async Task<IEnumerable<Order>> GetAllOrdersAsync()
-    {
-        using var context = await _companyDbFactory.CreateDbContextAsync();
-        
-        return await context.Orders
-            .Include(o => o.Employee)
-            .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
-            .OrderByDescending(o => o.OrderDate)
-            .ToListAsync();
-    }
-
-    public async Task<Order?> GetOrderByIdAsync(Guid id)
-    {
-        using var context = await _companyDbFactory.CreateDbContextAsync();
-        
-        return await context.Orders
-            .Include(o => o.Employee)
-            .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
-            .FirstOrDefaultAsync(o => o.Id == id);
+        return await context.Users
+            .AnyAsync(u => u.Email == email);
     }
 }
