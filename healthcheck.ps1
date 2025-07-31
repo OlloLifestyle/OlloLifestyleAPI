@@ -3,14 +3,10 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Domain = "api.ollolifestyle.com",
-    
-    [Parameter(Mandatory=$false)]
     [switch]$Detailed = $false
 )
 
-Write-Host "=== OlloLifestyle API Health Check ===" -ForegroundColor Green
-Write-Host "Domain: $Domain" -ForegroundColor Yellow
+Write-Host "=== OlloLifestyle API Health Check (Internal) ===" -ForegroundColor Green
 Write-Host "Timestamp: $(Get-Date)" -ForegroundColor Yellow
 
 $results = @()
@@ -29,55 +25,45 @@ try {
     $results += @{Component="Docker"; Status="Error"; Details=$_.Exception.Message}
 }
 
-# 2. Check API health endpoint (local)
-Write-Host "`nChecking local API health..." -ForegroundColor Cyan
+# 2. Check API health endpoint (direct)
+Write-Host "`nChecking direct API health..." -ForegroundColor Cyan
 try {
     $response = Invoke-RestMethod -Uri "http://localhost:8080/health" -TimeoutSec 10
-    Write-Host "✓ Local API health: OK" -ForegroundColor Green
-    $results += @{Component="API-Local"; Status="OK"; Details="Health endpoint responsive"}
+    Write-Host "✓ Direct API health: OK" -ForegroundColor Green
+    $results += @{Component="API-Direct"; Status="OK"; Details="Direct API endpoint responsive"}
 } catch {
-    Write-Host "✗ Local API health: Failed - $_" -ForegroundColor Red
-    $results += @{Component="API-Local"; Status="Failed"; Details=$_.Exception.Message}
+    Write-Host "✗ Direct API health: Failed - $_" -ForegroundColor Red
+    $results += @{Component="API-Direct"; Status="Failed"; Details=$_.Exception.Message}
 }
 
-# 3. Check SSL certificate
-Write-Host "`nChecking SSL certificate..." -ForegroundColor Cyan
+# 3. Check API via Nginx proxy
+Write-Host "`nChecking API via Nginx proxy..." -ForegroundColor Cyan
 try {
-    $request = [System.Net.WebRequest]::Create("https://$Domain/health")
-    $request.Timeout = 10000
-    $response = $request.GetResponse()
-    $cert = $request.ServicePoint.Certificate
-    $cert2 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($cert)
-    $daysUntilExpiry = ($cert2.NotAfter - (Get-Date)).Days
-    
-    if ($daysUntilExpiry -gt 30) {
-        Write-Host "✓ SSL Certificate: Valid (expires in $daysUntilExpiry days)" -ForegroundColor Green
-        $results += @{Component="SSL"; Status="Valid"; Details="Expires in $daysUntilExpiry days"}
-    } elseif ($daysUntilExpiry -gt 0) {
-        Write-Host "⚠ SSL Certificate: Expires soon ($daysUntilExpiry days)" -ForegroundColor Yellow
-        $results += @{Component="SSL"; Status="Warning"; Details="Expires in $daysUntilExpiry days"}
+    $response = Invoke-RestMethod -Uri "http://localhost/health" -TimeoutSec 10
+    Write-Host "✓ Nginx proxy API health: OK" -ForegroundColor Green
+    $results += @{Component="API-Nginx"; Status="OK"; Details="API accessible via Nginx proxy"}
+} catch {
+    Write-Host "✗ Nginx proxy API health: Failed - $_" -ForegroundColor Red
+    $results += @{Component="API-Nginx"; Status="Failed"; Details=$_.Exception.Message}
+}
+
+# 4. Check SQL Server connectivity
+Write-Host "`nChecking SQL Server connectivity..." -ForegroundColor Cyan
+try {
+    $connectionTest = Test-NetConnection -ComputerName "OLLO-DB-SVR" -Port 1433 -ErrorAction SilentlyContinue
+    if ($connectionTest.TcpTestSucceeded) {
+        Write-Host "✓ SQL Server connectivity: OK" -ForegroundColor Green
+        $results += @{Component="SQL-Server"; Status="OK"; Details="OLLO-DB-SVR:1433 reachable"}
     } else {
-        Write-Host "✗ SSL Certificate: Expired" -ForegroundColor Red
-        $results += @{Component="SSL"; Status="Expired"; Details="Certificate has expired"}
+        Write-Host "✗ SQL Server connectivity: Failed" -ForegroundColor Red
+        $results += @{Component="SQL-Server"; Status="Failed"; Details="Cannot reach OLLO-DB-SVR:1433"}
     }
-    $response.Close()
 } catch {
-    Write-Host "✗ SSL Certificate: Error - $_" -ForegroundColor Red
-    $results += @{Component="SSL"; Status="Error"; Details=$_.Exception.Message}
+    Write-Host "✗ SQL Server connectivity: Error - $_" -ForegroundColor Red
+    $results += @{Component="SQL-Server"; Status="Error"; Details=$_.Exception.Message}
 }
 
-# 4. Check external API access
-Write-Host "`nChecking external API access..." -ForegroundColor Cyan
-try {
-    $response = Invoke-RestMethod -Uri "https://$Domain/health" -TimeoutSec 15
-    Write-Host "✓ External API access: OK" -ForegroundColor Green
-    $results += @{Component="API-External"; Status="OK"; Details="HTTPS endpoint accessible"}
-} catch {
-    Write-Host "✗ External API access: Failed - $_" -ForegroundColor Red
-    $results += @{Component="API-External"; Status="Failed"; Details=$_.Exception.Message}
-}
-
-# 5. Check database connectivity (if possible)
+# 5. Check database connectivity via logs
 Write-Host "`nChecking database connectivity..." -ForegroundColor Cyan
 try {
     # This assumes we can check logs for database connection status

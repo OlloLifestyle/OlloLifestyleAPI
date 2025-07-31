@@ -1,27 +1,18 @@
-# OlloLifestyle API Deployment Script for Windows Server 2025
+# OlloLifestyle API Deployment Script for Internal Docker Communication
 # Run this script as Administrator
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Environment = "Production",
-    
-    [Parameter(Mandatory=$false)]
-    [switch]$InitialSetup = $false,
-    
-    [Parameter(Mandatory=$false)]
-    [switch]$RenewSSL = $false
+    [string]$Environment = "Production"
 )
 
-Write-Host "=== OlloLifestyle API Deployment Script ===" -ForegroundColor Green
+Write-Host "=== OlloLifestyle API Internal Deployment Script ===" -ForegroundColor Green
 Write-Host "Environment: $Environment" -ForegroundColor Yellow
 
 # Create necessary directories
 $directories = @(
     "logs",
-    "nginx/logs", 
-    "nginx/ssl",
-    "certbot/conf",
-    "certbot/www"
+    "nginx/logs"
 )
 
 foreach ($dir in $directories) {
@@ -35,54 +26,23 @@ foreach ($dir in $directories) {
 if (!(Test-Path ".env")) {
     Write-Host "Creating .env file from .env.example..." -ForegroundColor Yellow
     Copy-Item ".env.example" ".env"
-    Write-Host "IMPORTANT: Please edit .env file with your actual values!" -ForegroundColor Red
+    Write-Host "IMPORTANT: Please edit .env file with your JWT secret!" -ForegroundColor Red
+    Write-Host "SQL Server credentials are already configured for OLLO-DB-SVR" -ForegroundColor Green
     Read-Host "Press Enter after editing .env file"
 }
 
-# Initial SSL certificate setup
-if ($InitialSetup) {
-    Write-Host "Setting up initial SSL certificate..." -ForegroundColor Yellow
-    
-    # Create temporary nginx config for initial certificate
-    $tempConfig = @"
-server {
-    listen 80;
-    server_name api.ollolifestyle.com;
-    
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
+# Test SQL Server connectivity
+Write-Host "Testing SQL Server connectivity..." -ForegroundColor Yellow
+try {
+    $connectionTest = Test-NetConnection -ComputerName "OLLO-DB-SVR" -Port 1433 -ErrorAction SilentlyContinue
+    if ($connectionTest.TcpTestSucceeded) {
+        Write-Host "✓ SQL Server OLLO-DB-SVR is reachable on port 1433" -ForegroundColor Green
+    } else {
+        Write-Host "⚠ Warning: Cannot reach SQL Server OLLO-DB-SVR on port 1433" -ForegroundColor Yellow
+        Write-Host "Please ensure SQL Server is running and allows remote connections" -ForegroundColor Yellow
     }
-    
-    location / {
-        return 200 'Server is setting up SSL...';
-        add_header Content-Type text/plain;
-    }
-}
-"@
-    $tempConfig | Out-File -FilePath "nginx/conf.d/temp.conf" -Encoding utf8
-    
-    # Start nginx for certificate generation
-    docker-compose up -d nginx
-    
-    Write-Host "Generating SSL certificate..." -ForegroundColor Yellow
-    $domain = "api.ollolifestyle.com"
-    $email = Read-Host "Enter your email for SSL certificate"
-    
-    docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot --email $email --agree-tos --no-eff-email -d $domain
-    
-    # Remove temporary config
-    Remove-Item "nginx/conf.d/temp.conf" -Force
-    
-    Write-Host "SSL certificate generated successfully!" -ForegroundColor Green
-}
-
-# Renew SSL certificate
-if ($RenewSSL) {
-    Write-Host "Renewing SSL certificate..." -ForegroundColor Yellow
-    docker-compose run --rm certbot renew
-    docker-compose exec nginx nginx -s reload
-    Write-Host "SSL certificate renewed!" -ForegroundColor Green
-    exit
+} catch {
+    Write-Host "⚠ Warning: Could not test SQL Server connectivity" -ForegroundColor Yellow
 }
 
 # Build and deploy
@@ -99,7 +59,7 @@ Start-Sleep -Seconds 30
 # Check service health
 Write-Host "Checking service status..." -ForegroundColor Yellow
 $apiHealth = try {
-    Invoke-RestMethod -Uri "http://localhost:8080/health" -TimeoutSec 10
+    Invoke-RestMethod -Uri "http://localhost/health" -TimeoutSec 10
     "Healthy"
 } catch {
     "Unhealthy: $_"
@@ -112,13 +72,13 @@ Write-Host "`nRunning containers:" -ForegroundColor Yellow
 docker-compose ps
 
 Write-Host "`n=== Deployment Complete ===" -ForegroundColor Green
-Write-Host "API URL: https://api.ollolifestyle.com" -ForegroundColor Cyan
+Write-Host "Internal API URL: http://localhost (Nginx proxy)" -ForegroundColor Cyan
+Write-Host "Direct API URL: http://localhost:8080 (if exposed)" -ForegroundColor Cyan
+Write-Host "API in Docker network: http://olloapi:8080" -ForegroundColor Cyan
 Write-Host "Logs location: ./logs" -ForegroundColor Cyan
 Write-Host "Nginx logs: ./nginx/logs" -ForegroundColor Cyan
 
-if ($InitialSetup) {
-    Write-Host "`nNext steps:" -ForegroundColor Yellow
-    Write-Host "1. Point your domain api.ollolifestyle.com to this server's IP" -ForegroundColor White
-    Write-Host "2. Test your API at https://api.ollolifestyle.com/health" -ForegroundColor White
-    Write-Host "3. Monitor logs with: docker-compose logs -f" -ForegroundColor White
-}
+Write-Host "`nFor your frontend application:" -ForegroundColor Yellow
+Write-Host "- Use 'olloapi:8080' as API endpoint if frontend is in same Docker network" -ForegroundColor White
+Write-Host "- Use 'localhost' (port 80) if accessing via Nginx proxy" -ForegroundColor White
+Write-Host "- Monitor logs with: docker-compose logs -f" -ForegroundColor White
