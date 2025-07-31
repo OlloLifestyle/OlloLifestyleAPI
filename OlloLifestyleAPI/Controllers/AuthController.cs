@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OlloLifestyleAPI.Application.Authorization;
 using OlloLifestyleAPI.Application.DTOs.Master;
 using OlloLifestyleAPI.Application.Interfaces.Services;
+using OlloLifestyleAPI.Configuration;
 using System.Security.Claims;
 
 namespace OlloLifestyleAPI.Controllers;
@@ -35,6 +37,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitPolicies.Auth)] // Apply auth-specific rate limiting (10 requests per minute)
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         try
@@ -116,6 +119,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("change-password")]
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Auth)] // Apply auth-specific rate limiting for security-sensitive operations 
     public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         try

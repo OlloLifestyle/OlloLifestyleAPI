@@ -105,6 +105,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add Authorization with Policies
 builder.Services.AddAuthorizationPolicies();
 
+// Add Rate Limiting
+builder.Services.AddRateLimiting(builder.Configuration);
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -149,6 +152,9 @@ builder.Services.AddCors(options =>
     app.UseRouting();
 
     app.UseCors("AllowAll");
+
+    // Rate limiting - should be after routing but before authentication
+    app.UseRateLimiter();
 
     app.UseAuthentication();
 
