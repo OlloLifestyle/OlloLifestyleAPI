@@ -4,6 +4,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using OlloLifestyleAPI.Infrastructure.Extensions;
 using OlloLifestyleAPI.Middleware;
+using OlloLifestyleAPI.Configuration;
 using Serilog;
 
 // Configure Serilog
@@ -102,40 +103,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // Add Authorization with Policies
-builder.Services.AddAuthorization(options =>
-{
-    // Permission-based authorization policies
-    options.AddPolicy("Permission.factoryflowtracker.user.read", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.read")));
-    
-    options.AddPolicy("Permission.factoryflowtracker.user.create", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.create")));
-    
-    options.AddPolicy("Permission.factoryflowtracker.user.update", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.update")));
-    
-    options.AddPolicy("Permission.factoryflowtracker.user.delete", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.delete")));
-    
-    options.AddPolicy("Permission.factoryflowtracker.user.suspend", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.PermissionRequirement("factoryflowtracker.user.suspend")));
-
-    // Role-based authorization policies
-    options.AddPolicy("Role.Administrator", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.RoleRequirement("Administrator")));
-    
-    options.AddPolicy("Role.SystemAdmin", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.RoleRequirement("SystemAdmin")));
-
-    // Company access policy
-    options.AddPolicy("CompanyAccess", policy =>
-        policy.Requirements.Add(new OlloLifestyleAPI.Application.Authorization.CompanyAccessRequirement(0))); // 0 means any company
-});
-
-// Register Authorization Handlers
-builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.PermissionAuthorizationHandler>();
-builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.RoleAuthorizationHandler>();
-builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, OlloLifestyleAPI.Application.Authorization.CompanyAccessAuthorizationHandler>();
+builder.Services.AddAuthorizationPolicies();
 
 // Add CORS
 builder.Services.AddCors(options =>
