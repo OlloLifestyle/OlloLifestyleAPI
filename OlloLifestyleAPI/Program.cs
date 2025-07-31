@@ -4,8 +4,27 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using OlloLifestyleAPI.Infrastructure.Extensions;
 using OlloLifestyleAPI.Middleware;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+        .Build())
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+try
+{
+    Log.Information("Starting up Ollo Lifestyle API");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Use Serilog for logging
+    builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -129,47 +148,57 @@ builder.Services.AddCors(options =>
     });
 });
 
-var app = builder.Build();
+    var app = builder.Build();
 
-// Seed data in development
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var appDbContext = scope.ServiceProvider.GetRequiredService<OlloLifestyleAPI.Infrastructure.Persistence.AppDbContext>();
-    await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedMasterDataAsync(appDbContext);
-    
-    // Seed tenant data
-    await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedTenantDataAsync(
-        "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
-}
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    // Seed data in development
+    if (app.Environment.IsDevelopment())
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
-        c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
-    });
+        using var scope = app.Services.CreateScope();
+        var appDbContext = scope.ServiceProvider.GetRequiredService<OlloLifestyleAPI.Infrastructure.Persistence.AppDbContext>();
+        await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedMasterDataAsync(appDbContext);
+        
+        // Seed tenant data
+        await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedTenantDataAsync(
+            "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
+    }
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
+            c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
+        });
+    }
+
+    // Add global exception handling middleware
+    app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+    app.UseHttpsRedirection();
+
+    app.UseRouting();
+
+    app.UseCors("AllowAll");
+
+    app.UseAuthentication();
+
+    // Add Tenant Middleware - MUST be after UseAuthentication and before UseAuthorization
+    app.UseMiddleware<TenantMiddleware>();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    Log.Information("Ollo Lifestyle API started successfully");
+    app.Run();
 }
-
-// Add global exception handling middleware
-app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-
-app.UseHttpsRedirection();
-
-app.UseRouting();
-
-app.UseCors("AllowAll");
-
-app.UseAuthentication();
-
-// Add Tenant Middleware - MUST be after UseAuthentication and before UseAuthorization
-app.UseMiddleware<TenantMiddleware>();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
