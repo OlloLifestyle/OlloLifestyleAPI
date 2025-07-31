@@ -12,15 +12,15 @@ using OlloLifestyleAPI.Infrastructure.Persistence;
 namespace OlloLifestyleAPI.Infrastructure.Migrations.Tenant
 {
     [DbContext(typeof(CompanyDbContext))]
-    [Migration("20250730085724_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250731072615_InitialTenant")]
+    partial class InitialTenant
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
