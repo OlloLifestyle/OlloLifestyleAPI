@@ -3,15 +3,15 @@ version: '3.8'
 services:
   # .NET Web API
   olloapi:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dayandev/ollolifestyleapi:latest
     container_name: olloapi
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
       - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=OlloLifestyleAPI_Master;User Id=sa;Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=true;Encrypt=true;
+    ports:
+      - "8080:8080"
     expose:
       - "8080"
     volumes:
@@ -39,7 +39,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/logs:/var/log/nginx
-      - /etc/ssl/certs:/etc/ssl/certs:ro
+      - ./ssl/certs:/etc/ssl/certs:ro
+      - ./ssl/private:/etc/ssl/private:ro
     restart: unless-stopped
     networks:
       - ollo-network
