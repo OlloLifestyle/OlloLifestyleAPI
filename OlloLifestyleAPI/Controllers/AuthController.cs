@@ -285,7 +285,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            return Ok("okay sample");
+            return Ok("okay sample now work");
         }
         catch (Exception ex)
         {
