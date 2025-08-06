@@ -134,15 +134,13 @@ builder.Services.AddCors(options =>
     }
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    // Enable Swagger in both Development and Production
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
-        {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
-            c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
-        });
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
+        c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
+    });
 
     // Add global exception handling middleware
     app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
