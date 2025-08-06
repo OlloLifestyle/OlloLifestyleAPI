@@ -21,6 +21,7 @@ services:
       - ollo-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "OLLO-DB-SVR:host-gateway"
 
 networks:
   ollo-network:

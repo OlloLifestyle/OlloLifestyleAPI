@@ -1,8 +1,7 @@
-# Use the official .NET 9.0 runtime as base image
+# Use the official .NET 9.0 runtime as base image (Linux)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
 # Use the SDK image to build the application
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
@@ -39,9 +38,10 @@ RUN mkdir -p /app/Logs
 # Copy published application
 COPY --from=publish /app/publish .
 
-# Create non-root user for security
+# Create non-root user for security (Linux)
 RUN adduser --disabled-password --gecos '' --uid 1000 apiuser && \
-    chown -R apiuser:apiuser /app
+    chown -R apiuser:apiuser /app && \
+    chmod -R 755 /app/Logs
 USER apiuser
 
 ENTRYPOINT ["dotnet", "OlloLifestyleAPI.dll"]

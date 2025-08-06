@@ -11,32 +11,46 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=OlloLifestyleAPI_Master;User Id=sa;Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=true;Encrypt=true;
     expose:
       - "8080"
     volumes:
       - ./logs:/app/Logs
-      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
     restart: unless-stopped
     networks:
       - ollo-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Nginx Reverse Proxy (for internal load balancing if needed)
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: nginx-proxy
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/logs:/var/log/nginx
+      - /etc/ssl/certs:/etc/ssl/certs:ro
     restart: unless-stopped
     networks:
       - ollo-network
     depends_on:
       - olloapi
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   ollo-network:
@@ -44,6 +58,4 @@ networks:
 
 volumes:
   logs:
-    driver: local
-  nginx-logs:
     driver: local
