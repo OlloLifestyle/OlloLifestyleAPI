@@ -48,9 +48,9 @@ public class AuthController : ControllerBase
             }
 
             var response = await _authService.LoginAsync(request);
-            
+
             _logger.LogInformation("User {UserName} logged in successfully", request.UserName);
-            
+
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
@@ -76,9 +76,9 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             await _authService.LogoutAsync(userId);
-            
+
             _logger.LogInformation("User {UserId} logged out successfully", userId);
-            
+
             return Ok(new { message = "Logged out successfully" });
         }
         catch (Exception ex)
@@ -99,12 +99,12 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var user = await _userManagementService.GetUserByIdAsync(userId);
-            
+
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
-            
+
             return Ok(user);
         }
         catch (Exception ex)
@@ -131,14 +131,14 @@ public class AuthController : ControllerBase
 
             var userId = GetCurrentUserId();
             var success = await _userManagementService.ChangePasswordAsync(userId, request);
-            
+
             if (!success)
             {
                 return BadRequest(new { message = "Failed to change password. Current password may be incorrect." });
             }
-            
+
             _logger.LogInformation("User {UserId} changed password successfully", userId);
-            
+
             return Ok(new { message = "Password changed successfully" });
         }
         catch (Exception ex)
@@ -159,12 +159,12 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var hasAccess = await _authService.ValidateUserAccessToCompanyAsync(userId, companyId);
-            
+
             if (hasAccess)
             {
                 return Ok(new { message = "Access granted", companyId });
             }
-            
+
             return Forbid($"User does not have access to company {companyId}");
         }
         catch (Exception ex)
@@ -185,7 +185,7 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var permissions = await _userManagementService.GetUserPermissionsAsync(userId);
-            
+
             return Ok(permissions);
         }
         catch (Exception ex)
@@ -206,7 +206,7 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var companies = await _userManagementService.GetUserCompaniesAsync(userId);
-            
+
             return Ok(companies);
         }
         catch (Exception ex)
@@ -227,7 +227,7 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var hasPermission = await _userManagementService.UserHasPermissionAsync(userId, permission);
-            
+
             return Ok(new { hasPermission, permission });
         }
         catch (Exception ex)
@@ -248,7 +248,7 @@ public class AuthController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var user = await _userManagementService.GetUserByIdAsync(userId);
-            
+
             if (user == null || !user.IsActive)
             {
                 return Unauthorized(new { message = "User not found or inactive" });
@@ -256,9 +256,9 @@ public class AuthController : ControllerBase
 
             // Generate new token with current user data
             var response = await _authService.RefreshTokenAsync(userId);
-            
+
             _logger.LogInformation("Token refreshed for user {UserId}", userId);
-            
+
             return Ok(response);
         }
         catch (Exception ex)
@@ -278,6 +278,20 @@ public class AuthController : ControllerBase
             throw new UnauthorizedAccessException("Invalid user ID claim");
         }
         return userId;
+    }
+
+    [HttpGet("sample")]
+    public ActionResult<LoginResponse> sample()
+    {
+        try
+        {
+            return Ok("okay sample");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refreshing token");
+            return StatusCode(500, new { message = "An error occurred while refreshing token" });
+        }
     }
 
     #endregion
