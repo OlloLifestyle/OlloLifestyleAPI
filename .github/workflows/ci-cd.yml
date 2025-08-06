@@ -12,6 +12,12 @@ on:
       - master
       - main
       - develop
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        default: 'Emergency rollback'
 
 env:
   REGISTRY: ghcr.io
@@ -310,10 +316,3 @@ jobs:
           docker-compose ps
         '
 
-# Manual workflow dispatch for rollback
-workflow_dispatch:
-  inputs:
-    reason:
-      description: 'Reason for rollback'
-      required: true
-      default: 'Emergency rollback'
