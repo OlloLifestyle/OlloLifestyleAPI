@@ -22,7 +22,7 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ollolifestyleapi
-  SERVER_HOST: 192.168.50.98
+  SERVER_HOST: 118.189.233.238
   SERVER_USER: olloadmin
 
 jobs:
