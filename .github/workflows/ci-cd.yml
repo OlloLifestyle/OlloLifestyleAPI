@@ -20,7 +20,7 @@ on:
         default: 'Emergency rollback'
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: docker.io
   IMAGE_NAME: ollolifestyleapi
   SERVER_HOST: 192.168.50.98
   SERVER_USER: olloadmin
@@ -100,14 +100,14 @@ jobs:
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}
+        images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
           type=raw,value=latest,enable={{is_default_branch}}
@@ -196,7 +196,7 @@ jobs:
       run: |
         ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} '
           cd /opt/ollo-api
-          sed -i "s|image: .*ollolifestyleapi.*|image: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.version }}|g" docker-compose.yml
+          sed -i "s|image: .*ollolifestyleapi.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.version }}|g" docker-compose.yml
         '
 
     - name: Deploy to server
@@ -204,18 +204,18 @@ jobs:
         ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} '
           cd /opt/ollo-api
           
-          # Login to GitHub Container Registry
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          # Login to Docker Hub
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
           
           # Pull the latest image
-          docker pull ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.version }}
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.version }}
           
           # Stop existing containers
           docker-compose down || true
           
           # Remove old containers and images (keep last 3 versions)
           docker system prune -f
-          docker images ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }} --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}" | tail -n +4 | awk "{print \$3}" | xargs -r docker rmi || true
+          docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }} --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}" | tail -n +4 | awk "{print \$3}" | xargs -r docker rmi || true
           
           # Start the application
           docker-compose up -d
@@ -287,7 +287,7 @@ jobs:
           cd /opt/ollo-api
           
           # Get the previous image tag
-          PREVIOUS_IMAGE=$(docker images ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }} --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}" | grep -v latest | sed -n "2p" | awk "{print \$2}")
+          PREVIOUS_IMAGE=$(docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }} --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}" | grep -v latest | sed -n "2p" | awk "{print \$2}")
           
           if [ -z "$PREVIOUS_IMAGE" ]; then
             echo "No previous version found for rollback"
@@ -297,7 +297,7 @@ jobs:
           echo "Rolling back to version: $PREVIOUS_IMAGE"
           
           # Update docker-compose with previous image
-          sed -i "s|image: .*ollolifestyleapi.*|image: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}:$PREVIOUS_IMAGE|g" docker-compose.yml
+          sed -i "s|image: .*ollolifestyleapi.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:$PREVIOUS_IMAGE|g" docker-compose.yml
           
           # Restart with previous version
           docker-compose down
