@@ -30,6 +30,9 @@ try
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add Health Checks
+builder.Services.AddHealthChecks();
+
 // Add Memory Cache
 builder.Services.AddMemoryCache();
 
@@ -162,6 +165,9 @@ builder.Services.AddCors(options =>
     app.UseAuthorization();
 
     app.MapControllers();
+
+    // Map Health Check endpoint
+    app.MapHealthChecks("/health");
 
     Log.Information("Ollo Lifestyle API started successfully");
     app.Run();
