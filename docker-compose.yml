@@ -9,6 +9,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
       - ASPNETCORE_URLS=http://0.0.0.0:8080
       - ConnectionStrings__DefaultConnection=Server=127.0.0.1,1433;Database=OlloLifestyleAPI_Master;User Id=sa;Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=true;Encrypt=true;
     volumes:
