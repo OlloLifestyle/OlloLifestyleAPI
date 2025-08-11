@@ -285,7 +285,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            return Ok("okay sample now work with CICD and change firwall jh");
+            return Ok("okay sample now work with CICD and change firwall jhd");
         }
         catch (Exception ex)
         {
