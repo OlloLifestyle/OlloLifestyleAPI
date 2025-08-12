@@ -1,7 +1,7 @@
-# Use the official .NET 9.0 runtime as base image (Linux)
+# Use the official .NET 9.0 runtime as base image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5000
 
 # Use the SDK image to build the application
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
@@ -32,13 +32,16 @@ RUN dotnet publish "OlloLifestyleAPI.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Create logs directory
 RUN mkdir -p /app/Logs
 
 # Copy published application
 COPY --from=publish /app/publish .
 
-# Create non-root user for security (Linux)
+# Create non-root user for security
 RUN adduser --disabled-password --gecos '' --uid 1000 apiuser && \
     chown -R apiuser:apiuser /app && \
     chmod -R 755 /app/Logs

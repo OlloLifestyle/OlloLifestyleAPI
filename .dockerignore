@@ -1,26 +1,96 @@
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# Visual Studio and IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+.idea/
 **/.project
 **/.settings
 **/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
-**/bin
+
+# Logs
+**/Logs/
+*.log
+
+# Environment files (secrets should not be in container)
+.env
+.env.local
+.env.production
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# Docker files (not needed in image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Test files
+**/TestResults/
+**/*Test*/
+**/*.Test/
+
+# Temporary files
+**/tmp/
+**/temp/
+**/.tmp/
+
+# Package manager files
+**/packages/
+**/node_modules/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Deployment and CI/CD files
+deploy/
+scripts/
+*.yml
+*.yaml
+.github/
+.azure/
 **/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
+**/azds.yaml
 **/secrets.dev.yaml
 **/values.dev.yaml
-LICENSE
-README.md
-**/Logs
+
+# Database files
+*.db
+*.sqlite
+*.mdf
+*.ldf
+**/*.dbmdl
+**/*.jfm
+
+# Certificates and keys
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+ssl/
+
+# Backup files
+*.bak
+*.backup
+
+# Claude AI files
 **/.claude
