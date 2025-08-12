@@ -23,7 +23,8 @@
       "Bash(dotnet ef dbcontext list:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef database drop:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "WebFetch(domain:)"
     ],
     "deny": []
   }
