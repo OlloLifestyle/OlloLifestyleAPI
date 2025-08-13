@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (Internal Only)
   nginx-proxy:
     build: ./nginx
     container_name: ollo-api-nginx-proxy
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"  # Internal Docker network only
     volumes:
       - ./logs/nginx:/var/log/nginx
     networks:
@@ -47,6 +47,7 @@ services:
 networks:
   backend:
     driver: bridge
+    internal: true  # No external access
 
 volumes:
   logs:
