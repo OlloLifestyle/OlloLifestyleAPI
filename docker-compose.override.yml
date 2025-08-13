@@ -2,8 +2,10 @@ version: '3.8'
 
 # Development overrides
 services:
-  # Nginx - debug enabled for development
+  # Nginx - debug enabled for development with open Swagger access
   nginx-proxy:
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro  # Use development config
     environment:
       - NGINX_DEBUG=1
 
@@ -18,8 +20,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     volumes:
       # Mount source code for live reload (uncomment if using dotnet watch)
-      # - ./api/src:/app/src
-      # - ./api/appsettings.Development.json:/app/appsettings.Development.json
+      # - ./:/src
+      # - ./appsettings.Development.json:/app/appsettings.Development.json
       - ./logs/api:/app/Logs
     ports:
-      - "5000:5000"  # Expose API for direct access/Swagger in development
+      - "5000:5000"  # ONLY for development - direct API access/Swagger debugging

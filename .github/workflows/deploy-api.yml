@@ -70,7 +70,7 @@ jobs:
           
           # Stop existing services
           cd ${{ env.DEPLOYMENT_PATH }} || true
-          sudo docker-compose down || true
+          sudo docker-compose -f docker-compose.yml down || true
           
           # Clean up old images
           sudo docker image prune -f || true
@@ -118,14 +118,14 @@ jobs:
           sudo chown -R olloadmin:olloadmin ${{ env.DEPLOYMENT_PATH }}
           sudo chown -R olloadmin:olloadmin /home/olloadmin/logs
           
-          # Start services
-          sudo docker-compose up -d
+          # Start services (production mode - no override file)
+          sudo docker-compose -f docker-compose.yml up -d
           
           # Clean up
           rm -f *.tar.gz
           
           # Check service status
-          sudo docker-compose ps
+          sudo docker-compose -f docker-compose.yml ps
           
           # Wait for services to be ready
           sleep 30
