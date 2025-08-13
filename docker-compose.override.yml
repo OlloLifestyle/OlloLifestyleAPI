@@ -2,15 +2,6 @@ version: '3.8'
 
 # Development overrides
 services:
-  # Nginx - debug enabled for development with open Swagger access
-  nginx-proxy:
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro  # Use development config
-    ports:
-      - "8080:80"  # ONLY for development/testing access
-    environment:
-      - NGINX_DEBUG=1
-
   # API with development settings
   api:
     environment:
