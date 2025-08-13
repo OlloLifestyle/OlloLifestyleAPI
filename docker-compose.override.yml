@@ -1,0 +1,25 @@
+version: '3.8'
+
+# Development overrides
+services:
+  # Nginx - debug enabled for development
+  nginx-proxy:
+    environment:
+      - NGINX_DEBUG=1
+
+  # API with development settings
+  api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      # Mount source code for live reload (uncomment if using dotnet watch)
+      # - ./api/src:/app/src
+      # - ./api/appsettings.Development.json:/app/appsettings.Development.json
+      - ./logs/api:/app/Logs
+    ports:
+      - "5000:5000"  # Expose API for direct access/Swagger in development

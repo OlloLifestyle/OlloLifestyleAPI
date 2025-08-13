@@ -1,0 +1,144 @@
+name: Deploy API to Production
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  DEPLOYMENT_PATH: /home/olloadmin/OlloLifestyle.Webapi
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Build Docker images
+      run: |
+        docker build -t ollo-api:latest .
+        docker build -t ollo-api-nginx:latest ./nginx
+        
+    - name: Save Docker images
+      run: |
+        docker save ollo-api:latest | gzip > ollo-api.tar.gz
+        docker save ollo-api-nginx:latest | gzip > ollo-api-nginx.tar.gz
+        
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        port: ${{ secrets.PROD_PORT || 22 }}
+        script: |
+          # Create deployment directory
+          sudo mkdir -p ${{ env.DEPLOYMENT_PATH }}
+          sudo mkdir -p /home/olloadmin/logs/api
+          sudo mkdir -p /home/olloadmin/logs/nginx
+          
+          # Stop existing services
+          cd ${{ env.DEPLOYMENT_PATH }} || true
+          sudo docker-compose down || true
+          
+          # Clean up old images
+          sudo docker image prune -f || true
+          
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        port: ${{ secrets.PROD_PORT || 22 }}
+        source: |
+          docker-compose.yml
+          nginx/
+          .env.production
+          Dockerfile
+          OlloLifestyleAPI/
+          OlloLifestyleAPI.Application/
+          OlloLifestyleAPI.Core/
+          OlloLifestyleAPI.Infrastructure/
+          OlloLifestyleAPI.sln
+          .dockerignore
+        target: ${{ env.DEPLOYMENT_PATH }}
+        
+    - name: Copy Docker images to server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        port: ${{ secrets.PROD_PORT || 22 }}
+        source: "*.tar.gz"
+        target: ${{ env.DEPLOYMENT_PATH }}
+        
+    - name: Load and Start Services
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        port: ${{ secrets.PROD_PORT || 22 }}
+        script: |
+          cd ${{ env.DEPLOYMENT_PATH }}
+          
+          # Load Docker images
+          sudo docker load < ollo-api.tar.gz
+          sudo docker load < ollo-api-nginx.tar.gz
+          
+          # Set up environment
+          sudo cp .env.production .env
+          sudo chown olloadmin:olloadmin .env
+          sudo chmod 600 .env
+          
+          # Set proper permissions
+          sudo chown -R olloadmin:olloadmin ${{ env.DEPLOYMENT_PATH }}
+          sudo chown -R olloadmin:olloadmin /home/olloadmin/logs
+          
+          # Start services
+          sudo docker-compose up -d
+          
+          # Clean up
+          rm -f *.tar.gz
+          
+          # Check service status
+          sudo docker-compose ps
+          
+          # Wait for services to be ready
+          sleep 30
+          
+          # Health check
+          curl -f http://localhost/health || exit 1
+          
+          echo "API deployment completed successfully!"
