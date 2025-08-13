@@ -76,27 +76,17 @@ jobs:
           sudo docker image prune -f || true
           
     - name: Copy files to server
-      uses: appleboy/scp-action@v0.1.4
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ env.SERVER_HOST }}
         username: ${{ env.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        source: |
-          docker-compose.yml
-          nginx/
-          .env.production
-          Dockerfile
-          OlloLifestyleAPI/
-          OlloLifestyleAPI.Application/
-          OlloLifestyleAPI.Core/
-          OlloLifestyleAPI.Infrastructure/
-          OlloLifestyleAPI.sln
-          .dockerignore
+        source: "docker-compose.yml,nginx/,Dockerfile,OlloLifestyleAPI/,OlloLifestyleAPI.Application/,OlloLifestyleAPI.Core/,OlloLifestyleAPI.Infrastructure/,OlloLifestyleAPI.sln,.dockerignore,.env.production"
         target: ${{ env.DEPLOYMENT_PATH }}
         
     - name: Copy Docker images to server
-      uses: appleboy/scp-action@v0.1.4
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ env.SERVER_HOST }}
         username: ${{ env.SERVER_USER }}
