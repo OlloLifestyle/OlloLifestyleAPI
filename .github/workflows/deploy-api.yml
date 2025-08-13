@@ -8,6 +8,8 @@ on:
 
 env:
   DEPLOYMENT_PATH: /home/olloadmin/OlloLifestyle.Webapi
+  SERVER_HOST: 118.189.233.238
+  SERVER_USER: olloadmin
 
 jobs:
   test:
@@ -56,10 +58,10 @@ jobs:
     - name: Deploy to Production Server
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_KEY }}
-        port: ${{ secrets.PROD_PORT || 22 }}
+        host: ${{ env.SERVER_HOST }}
+        username: ${{ env.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         script: |
           # Create deployment directory
           sudo mkdir -p ${{ env.DEPLOYMENT_PATH }}
@@ -76,10 +78,10 @@ jobs:
     - name: Copy files to server
       uses: appleboy/scp-action@v0.1.4
       with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_KEY }}
-        port: ${{ secrets.PROD_PORT || 22 }}
+        host: ${{ env.SERVER_HOST }}
+        username: ${{ env.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         source: |
           docker-compose.yml
           nginx/
@@ -96,20 +98,20 @@ jobs:
     - name: Copy Docker images to server
       uses: appleboy/scp-action@v0.1.4
       with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_KEY }}
-        port: ${{ secrets.PROD_PORT || 22 }}
+        host: ${{ env.SERVER_HOST }}
+        username: ${{ env.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         source: "*.tar.gz"
         target: ${{ env.DEPLOYMENT_PATH }}
         
     - name: Load and Start Services
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_KEY }}
-        port: ${{ secrets.PROD_PORT || 22 }}
+        host: ${{ env.SERVER_HOST }}
+        username: ${{ env.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         script: |
           cd ${{ env.DEPLOYMENT_PATH }}
           
