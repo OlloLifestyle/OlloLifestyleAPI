@@ -28,7 +28,7 @@ services:
 networks:
   frontend:
     external: true
-    name: ollolifestylewebapp_frontend
+    name: ollo-lifestyle-webapp_frontend
 
 volumes:
   logs:
