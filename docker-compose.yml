@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # API Service (connects to WebApp's nginx)
   api:
     build: .
     container_name: ollo-api
@@ -14,9 +13,9 @@ services:
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
       - DB_PASSWORD=${DB_PASSWORD}
     expose:
-      - "5000"  # Internal only, accessible via Docker network
+      - "5000"
     networks:
-      - ollolifestylewebapp_frontend
+      - frontend
     volumes:
       - ./logs/api:/app/Logs
     healthcheck:
@@ -27,8 +26,9 @@ services:
       start_period: 40s
 
 networks:
-  ollolifestylewebapp_frontend:
+  frontend:
     external: true
+    name: ollolifestylewebapp_frontend
 
 volumes:
   logs:
