@@ -8,6 +8,7 @@ using OlloLifestyleAPI.Configuration;
 using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using System.Text.Json;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -201,7 +202,7 @@ builder.Services.AddCors(options =>
                 }),
                 totalDuration = report.TotalDuration.TotalMilliseconds
             };
-            await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }
     });
 
