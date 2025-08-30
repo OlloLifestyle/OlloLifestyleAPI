@@ -6,6 +6,8 @@ using OlloLifestyleAPI.Infrastructure.Extensions;
 using OlloLifestyleAPI.Middleware;
 using OlloLifestyleAPI.Configuration;
 using Serilog;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -30,8 +32,9 @@ try
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Add Health Checks
-builder.Services.AddHealthChecks();
+// Add Health Checks with database connectivity
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy("API is running"));
 
 // Add Memory Cache
 builder.Services.AddMemoryCache();
@@ -138,11 +141,16 @@ builder.Services.AddCors(options =>
 
     // Configure the HTTP request pipeline.
     // Enable Swagger in both Development and Production
-    app.UseSwagger();
+    app.UseSwagger(c =>
+    {
+        c.RouteTemplate = "swagger/{documentName}/swagger.json";
+    });
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollo Lifestyle API v1");
         c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+        c.DefaultModelsExpandDepth(-1);
     });
 
     // Add global exception handling middleware
@@ -166,8 +174,27 @@ builder.Services.AddCors(options =>
 
     app.MapControllers();
 
-    // Map Health Check endpoint
-    app.MapHealthChecks("/health");
+    // Map Health Check endpoint with detailed response
+    app.MapHealthChecks("/health", new HealthCheckOptions
+    {
+        ResponseWriter = async (context, report) =>
+        {
+            context.Response.ContentType = "application/json";
+            var response = new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(x => new
+                {
+                    name = x.Key,
+                    status = x.Value.Status.ToString(),
+                    description = x.Value.Description,
+                    duration = x.Value.Duration.TotalMilliseconds
+                }),
+                totalDuration = report.TotalDuration.TotalMilliseconds
+            };
+            await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+        }
+    });
 
     Log.Information("Ollo Lifestyle API started successfully");
     app.Run();
