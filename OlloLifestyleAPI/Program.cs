@@ -40,6 +40,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddMemoryCache();
 
 // Configure Swagger/OpenAPI
+Log.Information("Configuring Swagger services...");
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -78,6 +79,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+Log.Information("Swagger services configured successfully");
 
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
@@ -141,6 +143,8 @@ builder.Services.AddCors(options =>
 
     // Configure the HTTP request pipeline.
     // Enable Swagger in both Development and Production
+    Log.Information("Configuring Swagger middleware...");
+    
     app.UseSwagger(c =>
     {
         c.RouteTemplate = "swagger/{documentName}/swagger.json";
@@ -152,6 +156,8 @@ builder.Services.AddCors(options =>
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
         c.DefaultModelsExpandDepth(-1);
     });
+    
+    Log.Information("Swagger middleware configured successfully");
 
     // Add global exception handling middleware
     app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
@@ -173,6 +179,9 @@ builder.Services.AddCors(options =>
     app.UseAuthorization();
 
     app.MapControllers();
+
+    // Add a simple test endpoint
+    app.MapGet("/test", () => new { message = "API is working", swagger = "should be at /swagger", time = DateTime.UtcNow });
 
     // Map Health Check endpoint with detailed response
     app.MapHealthChecks("/health", new HealthCheckOptions
