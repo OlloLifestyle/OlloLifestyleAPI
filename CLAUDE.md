@@ -1,3 +1,72 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Essential Development Commands
+
+### Building and Running
+```bash
+# Build the entire solution
+dotnet build
+
+# Clean build artifacts
+dotnet clean
+
+# Run the API (from root directory)
+dotnet run --project OlloLifestyleAPI
+
+# Run with specific environment
+dotnet run --project OlloLifestyleAPI --environment Development
+
+# Publish for production
+dotnet publish OlloLifestyleAPI -c Release -o ./publish
+```
+
+### Database Operations
+```bash
+# Add new migration for Master context
+dotnet ef migrations add MigrationName --context AppDbContext --project OlloLifestyleAPI.Infrastructure --startup-project OlloLifestyleAPI
+
+# Add new migration for Tenant context
+dotnet ef migrations add MigrationName --context CompanyDbContext --project OlloLifestyleAPI.Infrastructure --startup-project OlloLifestyleAPI
+
+# Update Master database
+dotnet ef database update --context AppDbContext --project OlloLifestyleAPI.Infrastructure --startup-project OlloLifestyleAPI
+
+# Update Tenant database
+dotnet ef database update --context CompanyDbContext --project OlloLifestyleAPI.Infrastructure --startup-project OlloLifestyleAPI
+
+# Drop database (use with caution)
+dotnet ef database drop --context AppDbContext --project OlloLifestyleAPI.Infrastructure --startup-project OlloLifestyleAPI
+```
+
+### Docker Operations
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Build only
+docker-compose build
+
+# View logs
+docker-compose logs -f api
+
+# Stop services
+docker-compose down
+```
+
+### Package Management
+```bash
+# Add package to specific project
+dotnet add OlloLifestyleAPI.Application package PackageName
+
+# Remove package
+dotnet remove OlloLifestyleAPI.Application package PackageName
+
+# Restore packages
+dotnet restore
+```
+
 ## Project Memories
 
 - Remember layer project: A project involving layer management or layer-based architecture
@@ -133,6 +202,60 @@ public async Task<IActionResult> ManageUsers()
 5. **Error Handling**: Structured error responses with correlation tracking
 6. **Multi-Tenancy**: Company-based isolation with proper context switching
 7. **Validation**: FluentValidation for clean separation between domain and validation logic
+
+## Multi-Tenancy Architecture
+
+This application implements a **database-per-tenant** multi-tenancy model with two distinct database contexts:
+
+### Master Context (`AppDbContext`)
+- **Purpose**: Global application data shared across all tenants
+- **Entities**: Users, Companies, Roles, Permissions, UserRoles, UserCompanies
+- **Database**: `OlloLifestyleAPI_Master`
+- **Repository Pattern**: `MasterUnitOfWork` → `MasterGenericRepository<T>`
+
+### Tenant Context (`CompanyDbContext`) 
+- **Purpose**: Tenant-specific business data isolated per company
+- **Entities**: Employees, Products, Orders (tenant-specific data)
+- **Database**: `OlloLifestyleAPI_Tenant` (dynamically resolved per request)
+- **Repository Pattern**: `TenantUnitOfWork` → `TenantGenericRepository<T>`
+
+### Context Resolution Flow
+1. **Authentication**: JWT token contains user and company claims
+2. **TenantMiddleware**: Extracts company context from JWT claims
+3. **Repository Selection**: Services inject appropriate UnitOfWork (Master vs Tenant)
+4. **Data Isolation**: Each tenant's data is completely isolated at the database level
+
+## Key Architectural Patterns
+
+### Repository Pattern with Unit of Work
+- **Generic Repositories**: Support both `int` and `Guid` primary keys
+- **Queryable Access**: `GetQueryable()` for complex LINQ operations
+- **Pagination Support**: Built-in pagination methods
+- **Audit Trail**: Automatic CreatedAt/UpdatedAt via interceptors
+
+### Authorization Strategy
+- **JWT Claims**: Role-based and permission-based claims
+- **Custom Attributes**: `[RequirePermission]`, `[RequireRole]`, `[RequireCompanyAccess]`
+- **Middleware Pipeline**: Auth → Tenant Resolution → Authorization
+
+### Validation Architecture
+- **FluentValidation**: Centralized validation rules separate from entities
+- **Request Validators**: Each DTO has corresponding validator classes
+- **Domain-Driven**: Clean entities without data annotations
+
+## Environment Configuration
+
+### Development
+- **Database**: SQL Server Express with Trusted Connection
+- **Logging**: Console + File (daily rolling)
+- **Swagger**: Enabled at `/swagger`
+- **Data Seeding**: Automatic on startup
+
+### Production  
+- **Docker**: Multi-stage build with non-root user
+- **Environment Variables**: JWT secrets, connection strings via Docker Compose
+- **Health Checks**: Available at `/health` endpoint
+- **Logging**: Structured logging with correlation IDs
 
 ## Repository Structure
 - `Repositories/Master/`: Master database repositories (Users, Companies, Roles)
