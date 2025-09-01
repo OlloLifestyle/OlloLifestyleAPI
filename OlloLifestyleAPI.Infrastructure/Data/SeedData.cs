@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using OlloLifestyleAPI.Infrastructure.Data.Seeders;
 using OlloLifestyleAPI.Infrastructure.Persistence;
 
