@@ -2,33 +2,28 @@ version: '3.8'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: ollo-api
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://0.0.0.0:5000
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - Jwt__SecretKey=${JWT_SECRET_KEY}
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-      - ConnectionStrings__TenantConnection=${TENANT_CONNECTION_STRING:-${CONNECTION_STRING}}
-      - SERILOG_MINIMUM_LEVEL=${LOG_LEVEL:-Information}
+      - DB_PASSWORD=${DB_PASSWORD}
+    expose:
+      - "5000"
     networks:
       - frontend
     volumes:
-      - api_logs:/app/Logs
-      - /etc/localtime:/etc/localtime:ro
+      - ./logs/api:/app/Logs
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    user: "1001:1001"
 
 networks:
   frontend:
@@ -36,5 +31,4 @@ networks:
     name: ollo-lifestyle-webapp_frontend
 
 volumes:
-  api_logs:
-    driver: local
+  logs:
