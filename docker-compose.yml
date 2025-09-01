@@ -2,27 +2,57 @@ version: '3.8'
 
 services:
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: ollo-api
     restart: unless-stopped
+    ports:
+      - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://0.0.0.0:5000
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - Jwt__SecretKey=${JWT_SECRET_KEY}
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+      - ConnectionStrings__TenantConnection=${TENANT_CONNECTION_STRING:-${CONNECTION_STRING}}
       - DB_PASSWORD=${DB_PASSWORD}
-    expose:
-      - "5000"
+      - SERILOG_MINIMUM_LEVEL=${LOG_LEVEL:-Information}
     networks:
       - frontend
     volumes:
-      - ./logs/api:/app/Logs
+      - api_logs:/app/Logs
+      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
+    depends_on:
+      - db
+    user: "1001:1001"
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ollo-db
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_SA_PASSWORD}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    networks:
+      - frontend
+    volumes:
+      - db_data:/var/opt/mssql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${DB_SA_PASSWORD} -Q 'SELECT 1' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
       start_period: 60s
 
 networks:
@@ -31,5 +61,7 @@ networks:
     name: ollo-lifestyle-webapp_frontend
 
 volumes:
-  logs:
+  api_logs:
+    driver: local
+  db_data:
     driver: local
