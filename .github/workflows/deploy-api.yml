@@ -62,16 +62,16 @@ jobs:
         port: 22
         script: |
           # Create deployment directory
-          sudo mkdir -p ${{ env.DEPLOYMENT_PATH }}
-          sudo mkdir -p /home/olloadmin/logs/api
-          sudo mkdir -p /home/olloadmin/logs/nginx
+          mkdir -p ${{ env.DEPLOYMENT_PATH }}
+          mkdir -p /home/olloadmin/logs/api
+          mkdir -p /home/olloadmin/logs/nginx
           
           # Stop existing services
           cd ${{ env.DEPLOYMENT_PATH }} || true
-          sudo docker-compose -f docker-compose.yml down || true
+          docker-compose -f docker-compose.yml down || true
           
           # Clean up old images
-          sudo docker image prune -f || true
+          docker image prune -f || true
           
     - name: Copy files to server
       uses: appleboy/scp-action@v0.1.7
@@ -104,25 +104,20 @@ jobs:
           cd ${{ env.DEPLOYMENT_PATH }}
           
           # Load Docker image
-          sudo docker load < ollo-api.tar.gz
+          docker load < ollo-api.tar.gz
           
           # Set up environment
-          sudo cp .env.production .env
-          sudo chown olloadmin:olloadmin .env
-          sudo chmod 600 .env
-          
-          # Set proper permissions
-          sudo chown -R olloadmin:olloadmin ${{ env.DEPLOYMENT_PATH }}
-          sudo chown -R olloadmin:olloadmin /home/olloadmin/logs
+          cp .env.production .env
+          chmod 600 .env
           
           # Start services (production mode - no override file)
-          sudo docker-compose -f docker-compose.yml up -d
+          docker-compose -f docker-compose.yml up -d
           
           # Clean up
           rm -f ollo-api.tar.gz
           
           # Check service status
-          sudo docker-compose -f docker-compose.yml ps
+          docker-compose -f docker-compose.yml ps
           
           # Wait for services to be ready
           sleep 30
