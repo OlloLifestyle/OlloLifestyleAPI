@@ -24,7 +24,8 @@
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef database drop:*)",
       "Bash(timeout:*)",
-      "WebFetch(domain:)"
+      "WebFetch(domain:)",
+      "Bash(ssh:*)"
     ],
     "deny": []
   }
