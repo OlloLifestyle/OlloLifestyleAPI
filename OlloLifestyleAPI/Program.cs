@@ -165,7 +165,7 @@ builder.Services.AddCors(options =>
         
         // Seed tenant data
         await OlloLifestyleAPI.Infrastructure.Data.SeedData.SeedTenantDataAsync(
-            "Server=LAPTOP-418M7MUO\\SQLEXPRESS;Database=OlloLifestyleAPI_Tenant;Trusted_Connection=true;MultipleActiveResultSets=true;TrustServerCertificate=true;");
+            "Server=192.168.50.98;Database=OlloLifestyleAPI_Tenant;User Id=sa;Password=Sa@123#2025;MultipleActiveResultSets=true;TrustServerCertificate=true;Encrypt=true;");
     }
 
     // Configure the HTTP request pipeline.
