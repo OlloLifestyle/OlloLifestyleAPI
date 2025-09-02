@@ -80,7 +80,7 @@ jobs:
         username: ${{ env.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        source: "docker-compose.yml,Dockerfile,OlloLifestyleAPI/,OlloLifestyleAPI.Application/,OlloLifestyleAPI.Core/,OlloLifestyleAPI.Infrastructure/,OlloLifestyleAPI.sln,.dockerignore,.env.production"
+        source: "docker-compose.yml,Dockerfile,OlloLifestyleAPI/,OlloLifestyleAPI.Application/,OlloLifestyleAPI.Core/,OlloLifestyleAPI.Infrastructure/,OlloLifestyleAPI.sln,.dockerignore,.env"
         target: ${{ env.DEPLOYMENT_PATH }}
         
     - name: Copy Docker images to server
@@ -107,7 +107,6 @@ jobs:
           docker load < ollo-api.tar.gz
           
           # Set up environment
-          cp .env.production .env
           chmod 600 .env
           
           # Start services (production mode - no override file)

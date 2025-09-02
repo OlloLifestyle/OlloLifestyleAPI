@@ -6,17 +6,17 @@ services:
     container_name: ollo-api
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://0.0.0.0:5000
-      - JWT_SECRET_KEY=tX7@zK9!eA#dF$wL2pB^JgQmRvYxUoTiN1sC3hVbEkMzLaGd
-      - Jwt__SecretKey=tX7@zK9!eA#dF$wL2pB^JgQmRvYxUoTiN1sC3hVbEkMzLaGd
-      - ConnectionStrings__DefaultConnection=Server=192.168.50.1,1433;Database=OlloLifestyleAPI_Master;User Id=sa;Password=Sa@123#2025;MultipleActiveResultSets=true;TrustServerCertificate=true;Encrypt=true;
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - Jwt__SecretKey=${Jwt__SecretKey}
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
     expose:
       - "5000"
     networks:
       - frontend
     extra_hosts:
-      - "host.docker.internal:192.168.50.1"
+      - "host.docker.internal:${SQL_SERVER}"
     volumes:
       - ./logs/api:/app/Logs
     healthcheck:
