@@ -5,18 +5,13 @@ services:
     build: .
     container_name: ollo-api
     restart: unless-stopped
+    network_mode: host
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=${ASPNETCORE_URLS}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - Jwt__SecretKey=${Jwt__SecretKey}
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-    expose:
-      - "5000"
-    networks:
-      - frontend
-    extra_hosts:
-      - "host.docker.internal:192.168.50.98"
     volumes:
       - ./logs/api:/app/Logs
     healthcheck:
