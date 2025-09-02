@@ -16,7 +16,7 @@ services:
     networks:
       - frontend
     extra_hosts:
-      - "host.docker.internal:${SQL_SERVER}"
+      - "host.docker.internal:192.168.50.98"
     volumes:
       - ./logs/api:/app/Logs
     healthcheck:
