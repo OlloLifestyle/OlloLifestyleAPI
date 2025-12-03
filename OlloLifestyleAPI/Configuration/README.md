@@ -71,4 +71,11 @@ options.AddPolicy("Permission.newfeature.read", policy =>
 ### Company Access
 - `CompanyAccess` - Multi-tenant company access control
 
+## JWT Permission Claims Contract
+- Permissions are emitted only as scoped arrays: `permission_<scope>` → array of actions
+- Allowed actions: `access`, `read`, `write`, `delete` (all lowercase); any synonyms are normalized to this set before issuing tokens
+- No flat `permission` claim is included in JWTs
+- Scope examples: `user`, `product`, `order`, `factoryflowtracker_user`; scope names are normalized to lowercase with non-alphanumerics collapsed to `_`
+- Consumer expectation: validate presence of the action inside the `permission_<scope>` array (e.g., `permission_user: ["access","read","write","delete"]`)
+
 This focused approach keeps Program.cs clean while providing a dedicated space for the authorization configuration that will inevitably grow over time.

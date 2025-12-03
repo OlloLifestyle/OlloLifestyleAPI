@@ -6,6 +6,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using OlloLifestyleAPI.Application.Authorization;
 using OlloLifestyleAPI.Application.DTOs.Master;
 using OlloLifestyleAPI.Application.Interfaces.Services;
 using OlloLifestyleAPI.Infrastructure.Persistence;
@@ -188,11 +190,11 @@ public class AuthService : IAuthService
             claims.Add(new Claim("role_id", role.Id.ToString()));
         }
 
-        // Add permission claims
-        foreach (var permission in permissions)
+        var scopedPermissionClaims = BuildScopedPermissionClaims(permissions);
+        foreach (var (claimType, actions) in scopedPermissionClaims)
         {
-            claims.Add(new Claim("permission", permission.Name));
-            claims.Add(new Claim($"permission_{permission.Module.ToLowerInvariant()}", permission.Action));
+            var serialized = JsonSerializer.Serialize(actions);
+            claims.Add(new Claim(claimType, serialized, JsonClaimValueTypes.JsonArray));
         }
 
         // Add company access claims
@@ -324,5 +326,43 @@ public class AuthService : IAuthService
         // Simple password hashing for demo purposes
         // In production, use BCrypt.Net or similar
         return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
+    private Dictionary<string, List<string>> BuildScopedPermissionClaims(
+        IEnumerable<Core.Entities.Master.Permission> permissions)
+    {
+        var scopedClaims = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var permission in permissions)
+        {
+            var scopeSource = !string.IsNullOrWhiteSpace(permission.Module)
+                ? permission.Module
+                : permission.Name.Split('.').FirstOrDefault() ?? "unknown";
+
+            var scope = PermissionClaimHelper.NormalizeScope(scopeSource);
+            var normalizedAction = PermissionClaimHelper.NormalizeAction(permission.Action)
+                ?? PermissionClaimHelper.NormalizeAction(permission.Name.Split('.').LastOrDefault() ?? string.Empty);
+
+            if (normalizedAction is null)
+            {
+                _logger.LogWarning("Skipping permission '{PermissionName}' with unsupported action '{PermissionAction}'",
+                    permission.Name, permission.Action);
+                continue;
+            }
+
+            var claimType = PermissionClaimHelper.GetClaimType(scope);
+            if (!scopedClaims.TryGetValue(claimType, out var actions))
+            {
+                actions = new List<string>();
+                scopedClaims[claimType] = actions;
+            }
+
+            if (!actions.Contains(normalizedAction))
+            {
+                actions.Add(normalizedAction);
+            }
+        }
+
+        return scopedClaims;
     }
 }

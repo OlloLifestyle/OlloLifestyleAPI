@@ -5,10 +5,13 @@ namespace OlloLifestyleAPI.Application.Authorization;
 public class PermissionRequirement : IAuthorizationRequirement
 {
     public string Permission { get; }
+    public string Scope { get; }
+    public string? Action { get; }
 
     public PermissionRequirement(string permission)
     {
         Permission = permission;
+        (Scope, Action) = PermissionClaimHelper.ParsePermission(permission);
     }
 }
 
@@ -18,12 +21,18 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
         AuthorizationHandlerContext context,
         PermissionRequirement requirement)
     {
-        var permissions = context.User.Claims
-            .Where(c => c.Type == "permission")
-            .Select(c => c.Value)
-            .ToList();
+        if (requirement.Action is null)
+        {
+            return Task.CompletedTask;
+        }
 
-        if (permissions.Contains(requirement.Permission))
+        var claimType = PermissionClaimHelper.GetClaimType(requirement.Scope);
+        var permittedActions = context.User.Claims
+            .Where(c => c.Type == claimType)
+            .SelectMany(c => PermissionClaimHelper.ExtractActionsFromClaimValue(c.Value))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (permittedActions.Contains(requirement.Action))
         {
             context.Succeed(requirement);
         }

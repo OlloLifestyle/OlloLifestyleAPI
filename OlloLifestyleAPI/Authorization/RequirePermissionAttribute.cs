@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.Security.Claims;
+using OlloLifestyleAPI.Application.Authorization;
 
 namespace OlloLifestyleAPI.Authorization;
 
@@ -25,7 +25,18 @@ public class RequirePermissionAttribute : Attribute, IAuthorizationFilter
             return;
         }
 
-        var hasPermission = user.Claims.Any(c => c.Type == "permission" && c.Value == _permission);
+        var (scope, action) = PermissionClaimHelper.ParsePermission(_permission);
+        if (action is null)
+        {
+            context.Result = new ForbidResult();
+            return;
+        }
+
+        var claimType = PermissionClaimHelper.GetClaimType(scope);
+        var hasPermission = user.Claims
+            .Where(c => c.Type == claimType)
+            .SelectMany(c => PermissionClaimHelper.ExtractActionsFromClaimValue(c.Value))
+            .Any(a => a == action);
 
         if (!hasPermission)
         {
